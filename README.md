@@ -7,6 +7,7 @@ Programing language independent data's hear
 
 ## Porting Variation
 
-*gdsfeel-squeak
-*gdsfeel-jvm
-*gdsfeel-gnustep
+* gdsfeel-squeak (Editable, GPLII access enabled.)
+* gdsfeel-jvm
+* gdsfeel-gnustep
+* gdsfeel-qt
