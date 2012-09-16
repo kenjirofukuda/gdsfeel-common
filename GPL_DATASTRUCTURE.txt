@@ -1,0 +1,64 @@
+<<DataStructure>>
+- mode
++ rank
+
+<<Scalar>>(<<DataStructure>>)
+- value
++ rank := 0
++ byte_cost
+
+<Logical>(<<Scalar>>)
+- value := 0 | 1 | TRUE | FALSE
++ byte_cost := 1
+
+<<Number>>(<<Scalar>>)
++ as_real
+
+<<Float>>(<<Number>>)
+<<FixedInteregr>>(<<Number>>)
+
+<Real>(<<Float>>)
+# not IEEE754
+- mode := #REAL
+- value := -7.24e75..7.24e75
++ byte_cost := 8
+
+<Real2>(<<Float>>)
+# not IEEE754
++ byte_cost := 4
+
+<Integer>(<<FixedInteger>>)
+- mode := #INTEGER
+- value := -32768..32767
++ byte_cost := 2
+
+<Integer2>(<<FixedInteger>>)
+- mode := #INTEGER2
++ byte_cost := 4
+
+<Character>(<<Scalar>>)
+- mode := #CHAR
+- value := 0..255
++ byte_cost := 1
+
+<<Array>>(<<DataStructure>>)
+# has: <Primitive>
+- element_mode
+- elements[<Scalar>]
++ size
+
+<Vector>(<<Array>>)
+- rank := 1
+
+<Matrix>(<<Vector>>)
+- rank := 2
+- col_size
+- row_size
+
+<String>(<<Vector>>)
+- element_mode := #CHAR
+
+<List>(<DataStructure>)
+# <List> can't nested store into <List>
+- elements[<DataStructure> # without <List>] 
++ length
