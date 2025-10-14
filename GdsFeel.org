@@ -1,0 +1,232 @@
+#+TITLE: GdsFeel
+#+AUTHOR: kenjirofukuda
+#+HTML_HEAD_EXTRA: <style> .figure p {text-align: left;}</style>
+
+GDSビューワーの総称を GdsFeel と名付ています。Feelという言葉に逃げたのはとても及ばないという弱気な意味です。
+
+GDSはその昔、LSIのマスクデータのやり取りのために使われていたフォーマットです。
+
+GDSビューワーという題材は
+各プログラミング言語を学ぶ上で私にとっての FizzBazz みたいなものです。
+規模が小さすぎてもいけないし、大きすぎてもいけないので程よい大きさだと思います。
+
+
+| プロジェクト名  | 実装言語       | 環境名      | ソースコード管理                                     |
+|-----------------+----------------+-------------+------------------------------------------------------|
+| GdsFeel         | Smalltalk      | Pharo       | https://github.com/kenjirofukuda/small-stock.git     |
+|-----------------+----------------+-------------+------------------------------------------------------|
+| lazgds          | Object Pascal  | Lazarus IDE | https://github.com/kenjirofukuda/lazgds.git          |
+| gdsfeel-gnustep | Objective-C    | GNUstep     | https://github.com/kenjirofukuda/gdsfeel-gnustep.git |
+| cl-gdsfeel      | Common Lisp    | SLIME       | https://github.com/kenjirofukuda/cl-gdsfeel.git      |
+| gdsfeel-php     | PHP,Javascript | NetBeans    | https://github.com/kenjirofukuda/gdsfeel-php.git     |
+
+
+プロジェクト名には一貫性がありません。
+
+- [[file:GdsFeelPharo.org][GdsFeel Pharo]]
+
+* GDSreader.0.3.2
+全てのGdsFeelプロジェクトの検証データーに使用している test.gds というファイルの起源はこのパッケージによるものです。
+
+パッケージ説明のURL
+- https://netbsd.pkgs.org/10/netbsd-amd64/gdsreader-0.3.2.tgz.html
+
+パッケージバイナリーのURL
+- http://ftp.fr.netbsd.org/pub/pkgsrc/packages/NetBSD/amd64/10.1/All/gdsreader-0.3.2.tgz
+- https://ftp.netbsd.org/pub/pkgsrc/distfiles/GDSreader.0.3.2.tar.gz
+
+但しgdsファイルのみが必要な場合、上記パッケージ由来のリポジトリが存在したのでそこから取得しています。
+
+リポジトリのURL
+- https://github.com/makoto-fujiwara/GDSreader.git
+
+test.gdsのバイナリーURL
+- https://github.com/makoto-fujiwara/GDSreader/raw/master/test.gds
+
+| MD5         | a1a4c054d87e042a4cbee4a1d60c3f94 |
+| size (byte) |                           155648 |
+
+
+#+begin_comment
+
+NewValueHolderは廃止される運命にあるのか？
+#+end_comment
+
+* Atomicブランチの新設
+** 目的
+クラスの一時的退化
+
+Pharo以外の *Squeak由来のSmalltalk* に移植しやすくするためにPharoが先行して採用する技術を廃したクラスに一度退化させます。
+
+Pharoの素晴らしいツール文化には感謝しつつも、その行く末が *私的に楽しくない方向* に進んでいるようなのでSqueakとCuisに回帰してみようと考えました。
+
+ただ、依然としてマスターコードの所在はIDEの優秀さを理由にメインで使用しているあるPharoに違いありません。
+
+** 意図的に使わない手法
+退化の最初の手段は、一番揃っていないプラットフォームに合わせて興味本位に先行導入した下記手法を取り除くことです。
+
+|               | Pharo | Cuis | Squeak | 備考                               |
+|---------------+-------+------+--------+------------------------------------|
+| Announcer     | ○     |      |        |                                    |
+| ObsevableSlot | ○     |      |        |                                    |
+| Pragma        | ○     |      | ○      |                                    |
+| Trait         | ○     |      | ○      | インポート時にトラブルを生じやすい |
+
+信号伝搬は全てのSmalltalkがサポートしている古典的な
+- =addDependent:=
+- =removeDependent:=
+- =changed:=
+= =update:=
+を使用することにします。update: 側が肥大化する傾向にあり、あまり気が進みませんがやむを得ません。
+
+** FileManによる救済
+FileManで全てが解決されるわけではないのですが、かなりの部分を吸収できるのでありがたくこれを採用します。
+
+|        |               | 備考                                        |
+|--------+---------------+---------------------------------------------|
+| Squeak | FileDirectory | これが嫌すぎてPharoへ移行した経緯があります |
+| Pharo  | FileSystem    |                                             |
+| Cuis   | FileMan+      |                                             |
+
+*** FileMan+という表記の意味
+CuisがFileManを正式採用したことでコードベースの共通化に弾みがつくと考えましたがオリジナルのFileManに変更が加えられており、多少の修正が必要になります。
+
+**** ファイルまたはディレクトリ？問題
+#+begin_example
+{workingDirectory}/bar/baz
+#+end_example
+あるパス名を上記の表記で仮定した時、FileManでは
+#+begin_src smalltalk
+'./' asDirectoryEntry / 'bar' / 'baz'
+#+end_src
+と表現できます。
+ここで、まだ存在しない bazはどちらを意味するのでしょう？
+#+begin_src smalltalk
+  ('./' asDirectoryEntry / 'bar' / 'baz') class.
+  "FileMan  => FmFileDirectory"
+  "FileMan+ => DirectoryEntry"
+#+end_src
+という評価をした時にオリジナルのFileManは FmFileEntry を返し、CuisはDirectoryEntryを返します。
+
+良いか悪いかは別にして、解釈が異なるのでそれ以降のエラーの原因となります。
+
+Cuis側はこれに対して =//= で最後のアイテムがファイルであることを明示するルールになっています。
+#+begin_src smalltalk
+  ('./' asDirectoryEntry / 'bar' // 'baz') class.
+  "FileMan+ => FileEntry"
+#+end_src
+
+利用するユーザーの立場としては、この違いは統一して欲しいなというのが正直な気持ちです。
+
+** Streamクラスの混迷
+#+begin_src smalltalk
+  FileStream readOnlyFileNamed: aPath [ :stream | .... ].
+#+end_src
+Smalltalkに携わったことがあるならあまりにも教科書的なこのフレーズをご存知かとおもいます。ですがこのFileStream、もう当然のようには存在しません。
+
+他の言語で中核をなすクラスがいきなりなくなることはありません。例え非推奨扱いになったとしても残ります。ですがSmalltalk界隈ではこのようなことが平気で起こりえます。
+
+FileSteramの階層の複雑さは継承の悪い見本として語られてきました。多重継承を推奨するわけではありませんが、Traitが最初から存在しなかったことが悔やまれます。
+
+新しいStreamが時代に応じて出現し、それが階層配下に無いのは一向に構わないのですが上記記法を採用した時、本来のStreamにブリッジしてくれさえすればよいので総元締めの形式的なメッセージセンターを担うクラスとして残っていてほしかったと思います。
+
+しかし現在もうストリームは表に出さなくてよいという解釈に重きをおいていて、オブジェクトに =readStream=, =writeStream= のメッセージを送信し、具象クラスを隠す傾向にあるので問題がないと判断されたのでしょう。
+
+とは言ってみたものの FileManに =FileStream concreteClass= というコードがあり、
+Pharo 9.0 以降の対応に苦慮し、やっぱり中核としてのクラスは残してほしかったなと独りごちるわけです。
+
+
+** 命名法
+
+以下のルールを採用してパッケージの分割を行います。
+実際にはシリアライズの方法がバラバラなので完全なファイル統一とまではいかないのですが、ここでは概念的な分割を行います。
+
+| ~Atomic~ タグ  | 退化させながら設計するパッケージ群                       |
+| ~UI~ タグ      | UIが絡むパッケージ群、モデル側はこのタグがないことで表明 |
+| ~Any~ 接尾詞   | Pharo,Squeak,Cuis全てコードが共有できるパッケージ        |
+| ~Tests~ 接尾詞 | テストパッケージ                                         |
+
+Testsに関しては、後発の Cuis は接頭詞（ Tests-* ）として統一されています。
+ですが私はまだ公の場のリポジトリにおいてないのでこのルールは現在従っていません。
+
+最初に取り掛かったのはGDSII STREAM FORMAT 関連です。
+
+| GdsFeel-StreamFormat-Atomic-Any       |
+| GdsFeel-StreamFormat-Atomic-Pharo     |
+| GdsFeel-StreamFormat-Atomic-Squeak    |
+| GdsFeel-StreamFormat-Atomic-Cuis      |
+| GdsFeel-StreamFormat-Atomic-FileMan   |
+| GdsFeel-StreamFormat-Atomic-UI-Squeak |
+| GdsFeel-StreamFormat-Atomic-UI-Cuis   |
+| GdsFeel-StreamFormat-Atomic-UI-Pharo  |
+
+自分で決めておいてなんなのですが、正直長すぎてうんざりです。
+ブラウザのカテゴリ欄で表示しきれず、しょっちゅうスプリッターを広げる羽目になっています。
+
+よって短くなるように改定します。
+
+** 各バリアントで吸収すべきところ
+
+以下の違いがあり個別のエクステンションを書く羽目になりました。
+|                        | Squeak              | Pharo           | Cuis                                |
+|------------------------+---------------------+-----------------+-------------------------------------|
+| ダウンロード           | WebClient httpGet:  | Zinc            | WebClient httpGet:                  |
+| MD5による素材の検証    | WebUtils md5Digest: | MD5 hashStream: | WebUtils md5Digest:                 |
+| ファイル選択ダイアログ | UIManager           | UIManager       | FileList                            |
+|                        |                     |                 | FileList2と異なりモーダルになれない |
+
+*** ダウンロード
+最初は、以下のスタイルで統一できると考えていました。
+#+begin_src smalltalk
+  '/tmp' asDirectoryEntry
+      binaryAt: 'test.gds'
+      put: (GDSreader_0_3_2 sampleFileBinaryURL
+	asUrl retrieveContents contents asByteArray).
+#+end_src
+
+実際、SqueakとPharoでは成功しました。ところが、Cuisでは =asUrl asRetrieveContents= の流れが作れずこのスタイルは断念しました。
+
+Cuisの例
+#+begin_src smalltalk
+  '/tmp' asDirectoryEntry
+      binaryAt: 'test.gds'
+      put:
+          (WebClient httpGet: GDSreader_0_3_2 sampleFileBinaryURL)
+	      content asByteArray.
+#+end_src
+このスタイルを取ればSqueakとCuisを共通化出来ますが、WebClientの無いPharoでは成り立ちません。
+
+要するにどっちつかずとなりました。
+
+*** MD5による素材の検証
+同じ WebUtils md5Digest: でSqueakで通るテストがCuisでなぜかとおりません。
+その違いは16進の10から15を小文字で表現するか、大文字で表現するかの違いでした。
+
+#+begin_src smalltalk
+  hash := WebUtils md5Digest: fileEntry binaryContents.
+  "Squeak => 'a1a4c054d87e042a4cbee4a1d60c3f94'"
+  "Cuis   => 'A1A4C054D87E042A4CBEE4A1D60C3F94'"
+#+end_src
+Cuisは常にhexの表現を大文字に決めています。
+よって、 =assert:equals:= は使うべきでなく
+#+begin_src smalltalk
+  self assert: hash equals: GDSreader_0_3_2 md5sum
+#+end_src
+=assert:(sameAs:)=
+#+begin_src smalltalk
+  self assert: (hash sameAs: GDSreader_0_3_2 md5sum).
+#+end_src
+で吸収することにします。
+
+ちなみに Pharoの取得方法は以下のとおりです。
+#+begin_src smalltalk
+  hash := (MD5 hashStream: fileEntry readStream) hex.
+#+end_src
+
+*** ファイル選択ダイアログ
+UIManagerによって同じセレクタで抽象化できると思いきや、バージョン間、Squeak,Pharo間でセレクタ名がフラフラするのでいつも互換性に苦しみます。Morphicが誕生して20年近くなるのに未だ統一できないのか？まあ、統一する気がさらされなかったからPharoが誕生したわけだし...
+
+* TODO SqueakSSLプラグインの問題
+以下の記事が追跡に役に立つ
+
+https://lists.squeakfoundation.org/archives/list/squeak-dev@lists.squeakfoundation.org/thread/MBKNAZUSAU2EH642VBVB2ISRNP5HGNCJ/
