@@ -11,16 +11,17 @@ GDSビューワーという題材は
 規模が小さすぎてもいけないし、大きすぎてもいけないので程よい大きさだと思います。
 
 
-| プロジェクト名  | 実装言語       | 環境名      | ソースコード管理                                     |
-|-----------------+----------------+-------------+------------------------------------------------------|
-| GdsFeel         | Smalltalk      | Pharo       | https://github.com/kenjirofukuda/small-stock.git     |
-|-----------------+----------------+-------------+------------------------------------------------------|
-| lazgds          | Object Pascal  | Lazarus IDE | https://github.com/kenjirofukuda/lazgds.git          |
-| gdsfeel-gnustep | Objective-C    | GNUstep     | https://github.com/kenjirofukuda/gdsfeel-gnustep.git |
-| cl-gdsfeel      | Common Lisp    | SLIME       | https://github.com/kenjirofukuda/cl-gdsfeel.git      |
-|-----------------+----------------+-------------+------------------------------------------------------|
-| gdsfeel-php     | PHP,Javascript | NetBeans    | https://github.com/kenjirofukuda/gdsfeel-php.git     |
-| gdsfeel-php2    | PHP,Javascript | VSCode      | https://github.com/kenjirofukuda/gdsfeel-php2.git    |
+| プロジェクト名  | 実装言語       | 環境名         | ソースコード管理                                     |
+|-----------------+----------------+----------------+------------------------------------------------------|
+| GdsFeel         | Smalltalk      | Pharo          | https://github.com/kenjirofukuda/small-stock.git     |
+|-----------------+----------------+----------------+------------------------------------------------------|
+| lazgds          | Object Pascal  | Lazarus IDE    | https://github.com/kenjirofukuda/lazgds.git          |
+| gdsfeel-gnustep | Objective-C    | GNUstep        | https://github.com/kenjirofukuda/gdsfeel-gnustep.git |
+| cl-gdsfeel      | Common Lisp    | SLIME          | https://github.com/kenjirofukuda/cl-gdsfeel.git      |
+|-----------------+----------------+----------------+------------------------------------------------------|
+| gdsfeel-php     | PHP,JavaScript | NetBeans       | https://github.com/kenjirofukuda/gdsfeel-php.git     |
+| gdsfeel-php2    | PHP,JavaScript | Laravel/VSCode | https://github.com/kenjirofukuda/gdsfeel-php2.git    |
+| gdsfeel-js      | TypeScript     | nodejs/VSCode  | https://github.com/kenjirofukuda/gdsfeel-js.git      |
 
 
 プロジェクト名には一貫性がありません。
